@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+pandas
+numpy
+openpyxl
+python-multipart
+
+# --- TensorFlow / Keras ---
+# Apple Silicon (M1/M2/M3/M4) Macs: comment out "tensorflow" below and
+# uncomment these two instead:
+# tensorflow-macos
+# tensorflow-metal
+tensorflow

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Activity Signal — HAR GRU Classifier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Persistent Top Navigation Bar -->
+    <nav class="nav-bar">
+      <div class="nav-brand">
+        <svg class="heartbeat-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        <span class="brand-title">ACTIVITY SIGNAL</span>
+      </div>
+      <div class="nav-links">
+        <a href="#home" class="nav-link active" id="navHome">Home</a>
+        <a href="#classify" class="nav-link" id="navClassify">Classify</a>
+        <a href="#about" class="nav-link" id="navAbout">About</a>
+        <a href="#model-info" class="nav-link" id="navModelInfo">Model Info</a>
+      </div>
+      <div class="status-pill online" id="apiStatus">
+        <span class="dot"></span> backend online
+      </div>
+    </nav>
+
+    <main class="main-content">
+      <!-- 0. HOME VIEW (LANDING PAGE) -->
+      <section class="page-view active" id="viewHome">
+        <div class="panel home-hero-panel">
+          <div class="hero-glow home-glow-large"></div>
+
+          <!-- Animated Sensor Wave Graphic -->
+          <div class="home-wave-graphic">
+            <svg viewBox="0 0 800 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="pulse-wave-svg">
+              <path d="M0 40 Q 100 20, 200 40 T 400 40 T 600 40 T 800 40" stroke="rgba(62,227,192,0.12)" stroke-width="2" fill="none"/>
+              <path d="M0 40 L 220 40 L 240 10 L 260 70 L 280 20 L 300 60 L 320 40 L 800 40" stroke="#3EE3C0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" class="animated-pulse-path"/>
+            </svg>
+          </div>
+
+          <div class="home-hero-content">
+            <p class="app-tag">ACTIVITY SIGNAL</p>
+            <h1>One window. One activity.</h1>
+            <p class="home-sub">
+              Analyze 9-channel inertial sensor windows from smartphones and wearables to classify physical activities in real time using deep GRU neural networks.
+            </p>
+
+            <div class="home-action">
+              <a href="#classify" class="primary-button get-started-btn">Get Started ➔</a>
+            </div>
+
+            <!-- Supporting 6 Activity Badges -->
+            <div class="home-activities-badges">
+              <span class="activity-pill">🏃 Walking</span>
+              <span class="activity-pill">🧗 Walking Upstairs</span>
+              <span class="activity-pill">🚶 Walking Downstairs</span>
+              <span class="activity-pill">🪑 Sitting</span>
+              <span class="activity-pill">🧍 Standing</span>
+              <span class="activity-pill">🛌 Laying</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 1. CLASSIFY VIEW -->
+      <section class="page-view" id="viewClassify">
+        <div class="classify-layout">
+          <!-- Full-Height Dashboard-Style Left Sidebar Panel (Sticky Column) -->
+          <aside class="results-sidebar" id="resultsSidebar">
+            <!-- Sidebar Header Area -->
+            <div class="sidebar-header">
+              <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Collapse / Expand Sidebar" aria-label="Toggle sidebar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+              </button>
+              <div class="sidebar-brand">
+                <svg class="heartbeat-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                <span class="sidebar-brand-text">FLOW HAR</span>
+              </div>
+            </div>
+
+            <!-- Dashboard Menu List -->
+            <div class="sidebar-menu-section">
+              <div class="sidebar-header-label">DASHBOARD MENU</div>
+              <ul class="sidebar-links-list" id="sidebarLinks">
+                <li>
+                  <button type="button" class="sidebar-jump-link disabled" id="sideLinkPreview" data-target="previewPanel" title="Preview">
+                    <svg class="menu-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <span class="link-text">Preview</span>
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="sidebar-jump-link disabled" id="sideLinkPredictedActivity" data-target="secPredictedActivity" title="Predicted Activity">
+                    <svg class="menu-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <span class="link-text">Predicted Activity</span>
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="sidebar-jump-link disabled" id="sideLinkProbBreakdown" data-target="secProbBreakdown" title="Full Probability Breakdown">
+                    <svg class="menu-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="20" x2="18" y2="10"></line>
+                      <line x1="12" y1="20" x2="12" y2="4"></line>
+                      <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span class="link-text">Full Probability Breakdown</span>
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="sidebar-jump-link disabled" id="sideLinkAiInsight" data-target="secAiInsight" title="AI Motion Insight">
+                    <svg class="menu-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                    </svg>
+                    <span class="link-text">AI Motion Insight</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Bottom Footer -->
+            <div class="sidebar-footer">
+              <span class="footer-tag">v1.0 GRU Engine</span>
+            </div>
+          </aside>
+
+          <!-- Main Classify Content -->
+          <div class="classify-main-content">
+            <!-- Hero Header Area -->
+            <header class="app-hero">
+              <div class="hero-glow"></div>
+              <div class="hero-content">
+                <p class="app-tag">GRU SEQUENCE CLASSIFIER</p>
+                <h1>One window. One activity.</h1>
+                <p class="hero-sub">
+                  This model reads a single window of <strong>128 consecutive sensor readings</strong>, each with <strong>9 features</strong> (body acceleration + gyroscope, mean & std, X/Y/Z), and classifies the whole window as one activity. File must be exactly <strong>128 rows × 9 columns</strong> with no header row or extra id column. Supports channel labels, signal inspection, and full confidence scoring.
+                </p>
+              </div>
+            </header>
+
+            <!-- Upload Card -->
+            <div class="panel upload-panel">
+              <div class="drop-zone-wrapper">
+                <div class="drop-zone" id="dropZone">
+                  <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" hidden />
+                  <div class="drop-content">
+                    <div class="drop-icon">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                      </svg>
+                    </div>
+                    <p class="drop-title">Drag a .csv or .xlsx file here</p>
+                    <p class="drop-sub">exactly 128 rows × 9 numeric columns</p>
+                  </div>
+                </div>
+
+                <div class="file-chip" id="fileChip" hidden>
+                  <span id="fileName"></span>
+                  <button id="clearFile" aria-label="Remove file">✕</button>
+                </div>
+
+                <!-- Action Button -->
+                <div class="action-wrap">
+                  <button class="primary-button" id="runBtn" disabled>Get Prediction</button>
+                </div>
+                <p class="error-msg" id="errorMsg" hidden></p>
+              </div>
+            </div>
+
+            <!-- Signal Preview Section -->
+            <div class="panel preview-panel" id="previewPanel" hidden>
+              <div class="panel-header">
+                <div>
+                  <p class="panel-label">PREVIEW</p>
+                  <h2>Raw 9-channel signal preview</h2>
+                </div>
+                <p class="preview-status" id="previewStatus"></p>
+              </div>
+
+              <div class="preview-meta" id="previewMeta" hidden>
+                <p class="preview-copy" id="previewCopy"></p>
+                <ul class="mapping-list" id="mappingList"></ul>
+              </div>
+
+              <div class="chart-legend-swatches" id="channelLegendSwatches"></div>
+
+              <div class="chart-wrap">
+                <canvas id="previewChart" height="260"></canvas>
+              </div>
+            </div>
+
+            <!-- Dynamic Results Container (Completely empty until prediction completes) -->
+            <div id="resultsContainer"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. ABOUT VIEW -->
+      <section class="page-view" id="viewAbout">
+        <div class="panel about-hero-panel">
+          <div class="panel-label">SYSTEM OVERVIEW</div>
+          <h2>What is Human Activity Recognition (HAR)?</h2>
+          <p class="panel-copy">
+            Human Activity Recognition (HAR) transforms raw inertial sensor streams from modern smartphones and wearables into actionable physical activity classifications. By processing high-frequency 3D acceleration and angular velocity signals through deep temporal networks, HAR automatically identifies everyday movements without intrusive vision hardware.
+          </p>
+        </div>
+
+        <div class="about-grid">
+          <div class="panel feature-card">
+            <div class="card-icon">🏃</div>
+            <h3>Fitness & Performance</h3>
+            <p>Automatically track exercise sets, step cadence, and movement intensity without manual workout logging.</p>
+          </div>
+          <div class="panel feature-card">
+            <div class="card-icon">👵</div>
+            <h3>Elderly Care & Fall Detection</h3>
+            <p>Monitor daily living routines non-intrusively and detect sudden falls or prolonged physical inactivity in real time.</p>
+          </div>
+          <div class="panel feature-card">
+            <div class="card-icon">🏥</div>
+            <h3>Rehabilitation & Health</h3>
+            <p>Track gait speed, symmetry, and recovery progression for patients undergoing physical therapy.</p>
+          </div>
+          <div class="panel feature-card">
+            <div class="card-icon">🧘</div>
+            <h3>Ergonomics & Posture</h3>
+            <p>Analyze sedentary behaviors, posture changes, and workplace ergonomic health throughout the workday.</p>
+          </div>
+          <div class="panel feature-card">
+            <div class="card-icon">⌚</div>
+            <h3>Context-Aware Smart Devices</h3>
+            <p>Enable smartwatches and mobile OS environments to adapt notifications and UI based on user activity state.</p>
+          </div>
+          <div class="panel feature-card">
+            <div class="card-icon">📊</div>
+            <h3>Human Behavior Science</h3>
+            <p>Provide quantitative biomechanical datasets for kinesiology, sports science, and behavioral health research.</p>
+          </div>
+        </div>
+
+        <div class="panel dataset-panel">
+          <h2>Dataset & Sensor Specifications</h2>
+          <p class="panel-copy">This model was trained on the benchmark <strong>UCI Machine Learning Repository HAR Dataset</strong> captured via waist-mounted smartphone inertial measurement units (IMUs).</p>
+
+          <div class="spec-table">
+            <div class="spec-row">
+              <span class="spec-key">Sampling Frequency</span>
+              <span class="spec-val">50 Hz (50 samples per second)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Window Duration</span>
+              <span class="spec-val">128 consecutive timesteps (~2.56 seconds)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Sensor Channels (9)</span>
+              <span class="spec-val">Body Acc (X, Y, Z), Body Gyro (X, Y, Z), Total Acc (X, Y, Z)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Target Activities (6)</span>
+              <span class="spec-val">Walking, Walking Upstairs, Walking Downstairs, Sitting, Standing, Laying</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trimmed 4-Step Pipeline Diagram -->
+        <div class="panel pipeline-panel">
+          <h2>End-to-End Inference Pipeline</h2>
+          <div class="pipeline-steps">
+            <div class="pipe-step">
+              <div class="pipe-num">1</div>
+              <h4>Sensor Capture</h4>
+              <p>IMU records 3-axis acceleration and angular velocity at 50 Hz.</p>
+            </div>
+            <div class="pipe-arrow">➔</div>
+            <div class="pipe-step">
+              <div class="pipe-num">2</div>
+              <h4>Windowing</h4>
+              <p>Extracts fixed 128-sample sliding time window (128 × 9 matrix).</p>
+            </div>
+            <div class="pipe-arrow">➔</div>
+            <div class="pipe-step">
+              <div class="pipe-num">3</div>
+              <h4>GRU Inference</h4>
+              <p>Recurrent neural network computes temporal feature representations.</p>
+            </div>
+            <div class="pipe-arrow">➔</div>
+            <div class="pipe-step">
+              <div class="pipe-num">4</div>
+              <h4>Pipeline</h4>
+              <p>Softmax layer outputs probability distribution over 6 activity classes.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. MODEL INFO VIEW -->
+      <section class="page-view" id="viewModelInfo">
+        <div class="panel model-hero-panel">
+          <div class="panel-label">ARCHITECTURE DEEP DIVE</div>
+          <h2>Recurrent Neural Network (GRU) Model</h2>
+          <p class="panel-copy">
+            Time-series motion sensors require deep learning models capable of capturing temporal dependencies across consecutive timesteps. 
+            Gated Recurrent Units (GRU) utilize gating mechanisms (Reset Gate & Update Gate) to process temporal motion dynamics while mitigating vanishing gradients.
+          </p>
+        </div>
+
+        <!-- Architecture Flow Diagram -->
+        <div class="panel diagram-panel">
+          <h3>Neural Network Architecture Flow</h3>
+          <p class="panel-copy">Tensor transformation sequence from raw 9-channel inertial windows to 6-class softmax probabilities.</p>
+
+          <div class="arch-diagram">
+            <div class="arch-node">
+              <div class="node-tag">Input Tensor</div>
+              <div class="node-title">128 × 9 Sensor Matrix</div>
+              <div class="node-sub">128 Timesteps × 9 Channels</div>
+            </div>
+            <div class="arch-connector">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+            <div class="arch-node highlight-node">
+              <div class="node-tag">Recurrent Layer</div>
+              <div class="node-title">GRU Sequence Encoder</div>
+              <div class="node-sub">Gated Recurrent Units</div>
+            </div>
+            <div class="arch-connector">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+            <div class="arch-node">
+              <div class="node-tag">Dense Layer</div>
+              <div class="node-title">Fully-Connected Classifier</div>
+              <div class="node-sub">6 Linear Output Units</div>
+            </div>
+            <div class="arch-connector">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+            <div class="arch-node success-node">
+              <div class="node-tag">Activation</div>
+              <div class="node-title">Softmax Output</div>
+              <div class="node-sub">6 Activity Probabilities</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Specs Panel -->
+        <div class="panel">
+          <h3>Model Specifications</h3>
+          <div class="spec-table" id="modelSpecTable">
+            <div class="spec-row">
+              <span class="spec-key">Model File</span>
+              <span class="spec-val">har_final_model.keras</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Input Shape</span>
+              <span class="spec-val">(None, 128, 9)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Sequence Length</span>
+              <span class="spec-val">128 timesteps</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Channel Features</span>
+              <span class="spec-val">9 tri-axial inertial signals</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Output Classes</span>
+              <span class="spec-val">6 activities (Softmax)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Total Parameters</span>
+              <span class="spec-val" id="modelTotalParams">157,798</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="/static/script.js"></script>
+</body>
+</html>
