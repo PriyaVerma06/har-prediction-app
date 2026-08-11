@@ -1,21 +1,6 @@
-# Environment variables and secrets
 .env
 backend/.env
-*.env
-
-# Python virtual environments
-.venv/
 backend/.venv/
-venv/
-ENV/
-
-# Python cache & bytecode
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-
-# IDE and OS files
+*.pyc
 .DS_Store
-.vscode/
-.idea/

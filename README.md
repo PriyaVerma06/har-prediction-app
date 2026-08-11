@@ -245,47 +245,9 @@ curl -X POST http://127.0.0.1:8000/predict \
   }
 }
 ```
+- **Response:**
+```json
 {
   "explanation": "The model detected Laying with 99.9% confidence, indicating an unambiguous static posture. The tri-axial sensor signature demonstrates near-zero dynamic acceleration consistent with a resting position."
 }
 ```
-
----
-
-## 6. Hugging Face Spaces Deployment Guide
-
-This repository includes a production-ready `Dockerfile` and `requirements.txt` configured specifically for deploying to **Hugging Face Spaces (Docker SDK)**.
-
-### Step 1: Create a New Hugging Face Space
-1. Log in to [huggingface.co](https://huggingface.co) and click **New Space**.
-2. Set your Space Name (e.g. `har-activity-recognition`).
-3. Select **Docker** as the Space SDK (Blank template).
-4. Choose **Public** or **Private** visibility and click **Create Space**.
-
-### Step 2: Configure Repository Secrets (Groq API Key)
-1. In your newly created Space, navigate to **Settings** → **Variables and secrets**.
-2. Under **Secrets**, click **New secret**.
-3. Set Name: `GROQ_API_KEY`
-4. Set Value: `gsk_your_actual_groq_api_key` (from [console.groq.com](https://console.groq.com/keys)).
-5. Click **Save**.
-
-### Step 3: Push the Codebase to Hugging Face Spaces
-Clone your Hugging Face Space repository or add it as a git remote, then push the project:
-
-```bash
-# Add Hugging Face Space as a remote (replace with your Space URL)
-git remote add space https://huggingface.co/spaces/YOUR_USERNAME/YOUR_SPACE_NAME
-
-# Push to Hugging Face
-git push space main
-```
-
-*(Note: The `.keras` model file is ~1.9 MB, well within standard git push limits.)*
-
-### Step 4: Verify Deployment & Endpoints
-Once Hugging Face finishes building the Docker container, your Space will be live:
-- **Web Interface:** Direct access at `https://YOUR_USERNAME-YOUR_SPACE_NAME.hf.space`
-- **Health Check:** `GET https://YOUR_USERNAME-YOUR_SPACE_NAME.hf.space/status`
-- **API Docs:** `GET https://YOUR_USERNAME-YOUR_SPACE_NAME.hf.space/docs`
-- **Inference:** `POST https://YOUR_USERNAME-YOUR_SPACE_NAME.hf.space/predict` with `sample_128x9.csv`
-
