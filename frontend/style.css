@@ -137,6 +137,9 @@ body {
   font-size: 12px;
   color: var(--text-muted);
   background: var(--surface);
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
 }
 
 .status-pill .dot {
@@ -162,44 +165,21 @@ body {
   border-color: rgba(255, 107, 117, 0.3);
 }
 
+.status-pill.api-docs-pill {
+  cursor: pointer;
+}
+
+.status-pill.api-docs-pill:hover {
+  background: var(--surface-strong);
+  border-color: var(--accent);
+  box-shadow: 0 0 14px rgba(62, 227, 192, 0.2);
+  transform: translateY(-1px);
+}
+
 .nav-right {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.api-docs-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: var(--surface);
-  text-decoration: none;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  white-space: nowrap;
-}
-
-.api-docs-btn:hover {
-  color: var(--text);
-  border-color: var(--accent);
-  background: var(--surface-strong);
-  box-shadow: 0 0 12px rgba(62, 227, 192, 0.15);
-}
-
-.api-docs-btn .external-icon {
-  color: var(--text-muted);
-  transition: transform 0.2s ease, color 0.2s ease;
-}
-
-.api-docs-btn:hover .external-icon {
-  color: var(--accent);
-  transform: translate(1px, -1px);
 }
 
 /* ================= HERO HEADER (CLASSIFY PAGE) ================= */
