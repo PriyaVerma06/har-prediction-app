@@ -16,6 +16,11 @@ const previewChartCanvas = document.getElementById("previewChart");
 const channelLegendSwatches = document.getElementById("channelLegendSwatches");
 const resultsSidebar = document.getElementById("resultsSidebar");
 const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
+const apiDocsLink = document.getElementById("apiDocsLink");
+
+if (apiDocsLink) {
+  apiDocsLink.href = `${API_URL}/docs`;
+}
 
 // Section Availability State Tracking
 const sectionState = {

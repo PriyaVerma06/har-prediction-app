@@ -162,6 +162,46 @@ body {
   border-color: rgba(255, 107, 117, 0.3);
 }
 
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.api-docs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--surface);
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.api-docs-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--surface-strong);
+  box-shadow: 0 0 12px rgba(62, 227, 192, 0.15);
+}
+
+.api-docs-btn .external-icon {
+  color: var(--text-muted);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.api-docs-btn:hover .external-icon {
+  color: var(--accent);
+  transform: translate(1px, -1px);
+}
+
 /* ================= HERO HEADER (CLASSIFY PAGE) ================= */
 .app-hero {
   position: relative;
@@ -1240,17 +1280,30 @@ body {
 }
 
 /* Responsive tweaks */
+@media (max-width: 820px) {
+  .nav-bar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
 @media (max-width: 680px) {
   .nav-bar {
     flex-direction: column;
     align-items: stretch;
     border-radius: 20px;
+    gap: 12px;
   }
   .nav-brand {
     justify-content: center;
   }
   .nav-links {
     justify-content: center;
+    flex-wrap: wrap;
+  }
+  .nav-right {
+    justify-content: center;
+    flex-wrap: wrap;
   }
   .status-pill {
     justify-content: center;
