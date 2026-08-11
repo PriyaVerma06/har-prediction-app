@@ -1,9 +1,37 @@
+import os
+import logging
+from pathlib import Path
 import numpy as np
 import tensorflow as tf
-from pathlib import Path
 
-# Your model file — already included in this project.
-MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "har_final_model.keras"
+logger = logging.getLogger("har_app")
+
+
+def _resolve_model_path() -> Path:
+    env_path = os.environ.get("MODEL_PATH")
+    if env_path:
+        p = Path(env_path)
+        if p.exists():
+            return p
+
+    # Standard path relative to this source file: backend/models/har_final_model.keras
+    candidate_1 = Path(__file__).resolve().parent.parent / "models" / "har_final_model.keras"
+    if candidate_1.exists():
+        return candidate_1
+
+    # Fallback to current working directory relative paths
+    candidate_2 = Path.cwd() / "backend" / "models" / "har_final_model.keras"
+    if candidate_2.exists():
+        return candidate_2
+
+    candidate_3 = Path.cwd() / "models" / "har_final_model.keras"
+    if candidate_3.exists():
+        return candidate_3
+
+    return candidate_1
+
+
+MODEL_PATH = _resolve_model_path()
 
 
 def _remove_quantization_config(config):
@@ -17,19 +45,36 @@ def _remove_quantization_config(config):
 
 
 def _patch_dense_from_config():
-    Dense = tf.keras.layers.Dense
-    original_from_config = Dense.from_config
+    """
+    Keras 3 / TensorFlow 2.x compatibility patch:
+    Strips unexpected 'quantization_config: None' from serialized Dense layer configs
+    when deserializing .keras models saved across different Keras versions.
+    """
+    layers_to_patch = []
+    if hasattr(tf, "keras") and hasattr(tf.keras, "layers") and hasattr(tf.keras.layers, "Dense"):
+        layers_to_patch.append(tf.keras.layers.Dense)
+    try:
+        import keras
+        if hasattr(keras, "layers") and hasattr(keras.layers, "Dense"):
+            if keras.layers.Dense not in layers_to_patch:
+                layers_to_patch.append(keras.layers.Dense)
+    except ImportError:
+        pass
 
-    @classmethod
-    def patched_from_config(cls, config):
-        if isinstance(config, dict):
-            config.pop("quantization_config", None)
-            _remove_quantization_config(config)
-        return original_from_config(config)
+    for Dense in layers_to_patch:
+        original_from_config = Dense.from_config
 
-    Dense.from_config = patched_from_config
+        @classmethod
+        def patched_from_config(cls, config):
+            if isinstance(config, dict):
+                config.pop("quantization_config", None)
+                _remove_quantization_config(config)
+            return original_from_config(config)
 
-# Confirmed from your model's config.json: Dense(6, activation="softmax")
+        Dense.from_config = patched_from_config
+
+
+# Confirmed from model's config.json: Dense(6, activation="softmax")
 # Order matches the UCI HAR dataset's standard label order.
 CLASS_LABELS = [
     "Walking",
@@ -40,7 +85,7 @@ CLASS_LABELS = [
     "Laying",
 ]
 
-# Confirmed from your model's InputLayer: batch_shape = [null, 128, 9]
+# Confirmed from model's InputLayer: batch_shape = [null, 128, 9]
 SEQ_LEN = 128
 N_FEATURES = 9
 
@@ -48,12 +93,30 @@ _model = None
 
 
 def get_model():
+    """
+    Loads and caches the .keras model once at startup or on first call.
+    Uses compile=False for optimal inference speed and zero optimizer overhead.
+    """
     global _model
     if _model is None:
-        if not MODEL_PATH.exists():
-            raise FileNotFoundError(f"Model not found at {MODEL_PATH}")
+        model_path = _resolve_model_path()
+        if not model_path.exists():
+            raise FileNotFoundError(f"Model not found at {model_path}")
+
         _patch_dense_from_config()
-        _model = tf.keras.models.load_model(MODEL_PATH)
+        logger.info(f"Loading .keras model from: {model_path}")
+
+        try:
+            _model = tf.keras.models.load_model(model_path, compile=False)
+        except Exception as tf_err:
+            logger.warning(f"tf.keras.models.load_model failed ({tf_err}), attempting keras.models.load_model fallback...")
+            try:
+                import keras
+                _model = keras.models.load_model(model_path, compile=False)
+            except Exception:
+                raise tf_err
+
+        logger.info(f"Model loaded successfully: {_model.name}")
     return _model
 
 

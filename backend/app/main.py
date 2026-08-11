@@ -22,7 +22,8 @@ logger = logging.getLogger("har_app")
 groq_key = os.getenv("GROQ_API_KEY")
 logger.info(f"[Startup] GROQ_API_KEY configured: {bool(groq_key)} (Prefix: {groq_key[:8] if groq_key else 'None'})")
 
-from .model_loader import predict_sequence, CLASS_LABELS, SEQ_LEN, N_FEATURES
+from contextlib import asynccontextmanager
+from .model_loader import predict_sequence, get_model, CLASS_LABELS, SEQ_LEN, N_FEATURES
 from .llm import explain_prediction as llm_explain_prediction
 
 EXPECTED_CHANNEL_LABELS = [
@@ -37,7 +38,21 @@ EXPECTED_CHANNEL_LABELS = [
     "total_acc_z",
 ]
 
-app = FastAPI(title="Human Activity Recognition API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Eagerly load the .keras model once at startup to eliminate cold-start latency
+    logger.info("[Startup] Initializing backend and pre-loading HAR neural network model...")
+    try:
+        model = get_model()
+        logger.info(f"[Startup] Model pre-loaded successfully: {model.name}")
+    except Exception as e:
+        logger.error(f"[Startup] Model pre-loading failed: {e}", exc_info=True)
+    yield
+    logger.info("[Shutdown] Server shutting down.")
+
+
+app = FastAPI(title="Human Activity Recognition API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -411,7 +426,17 @@ async def explain(req: ExplainRequest):
 # Mount frontend static files AFTER the API routes so the `/predict` POST
 # endpoint keeps precedence (static files only handle GET/HEAD). This serves
 # the UI from the backend on the same origin, avoiding cross-origin POSTs.
-FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
+def _resolve_frontend_dir() -> Path:
+    candidate_1 = Path(__file__).resolve().parents[2] / "frontend"
+    if candidate_1.exists():
+        return candidate_1
+    candidate_2 = Path.cwd() / "frontend"
+    if candidate_2.exists():
+        return candidate_2
+    return candidate_1
+
+FRONTEND_DIR = _resolve_frontend_dir()
+
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
@@ -425,3 +450,12 @@ if FRONTEND_DIR.exists():
         if target.exists() and target.is_file():
             return FileResponse(target)
         raise HTTPException(status_code=404, detail="Not found")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 7860))
+    host = os.environ.get("HOST", "0.0.0.0")
+    logger.info(f"Starting Uvicorn server on {host}:{port}")
+    uvicorn.run(app, host=host, port=port)
+
